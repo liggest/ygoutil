@@ -1,5 +1,18 @@
-from ygoutil.constant import *
+from ygoutil.constant import CardType, CardRace, CardAttribute
 
+def _ensureCardType(cardType: CardType):
+        def deco(func):
+            def wrapper(self: "SQLBuilder", *args):
+                raw = func(self, *args)
+                if self._checkHas("cardType", cardType):
+                    return raw  # 原 SQL 条件
+                return (
+                    f"({raw} AND {self._cardTypeSQL(cardType)})"
+                )  # 附加上 CardType 条件
+
+            return wrapper
+
+        return deco
 
 class SQLBuilder:
     _base = "SELECT t.name,t.DESC,d.* FROM texts t INNER JOIN datas d ON t.id=d.id"
@@ -29,7 +42,7 @@ class SQLBuilder:
         return self.resolve()
 
     def __repr__(self) -> str:
-        return self.materials.__repr__() + "\n" + super.__repr__()
+        return f"{self.materials.__repr__()}\n{super().__repr__()}"
 
     @staticmethod
     def _upperFirst(text: str):
@@ -41,19 +54,19 @@ class SQLBuilder:
         return text
 
     @staticmethod
-    def dealRace(text: str) -> CardRace:
+    def dealRace(text: str) -> CardRace | None:
         if text.endswith("族"):
             text = text[:-1]
-        return str2cardRace.get(text)
+        return CardRace.fromStr(text)
 
     @staticmethod
-    def dealAttribute(text: str) -> CardAttribute:
+    def dealAttribute(text: str) -> CardAttribute | None:
         if text.endswith("属性"):
             text = text[:-2]
-        return str2cardAttribute.get(text)
+        return CardAttribute.fromStr(text)
 
     @staticmethod
-    def dealCardType(text: str) -> CardType:
+    def dealCardType(text: str) -> CardType | None:
         if text.endswith("卡"):
             text = text[:-1]
         base = text[-2:]
@@ -61,21 +74,21 @@ class SQLBuilder:
         # if (text.endswith("怪兽") and text!="怪兽") or (text.endswith("魔法") and text!="魔法") or (text.endswith("陷阱") and text!="陷阱"):
         if base in ("怪兽", "魔法", "陷阱") and text != base:
             text = text[:-2]
-            baseType = str2cardType.get(base)
-        textType = str2cardType.get(text)
+            baseType = CardType.fromStr(base)
+        textType = CardType.fromStr(text)
         if baseType is not None and textType is not None:
             textType |= baseType
         return textType
 
     @staticmethod
-    def _dealAD(text: str) -> int:
+    def _dealAD(text: str) -> int | None:
         if text.isdigit() and len(text) < 5:  # 4 位及以下的数
             return int(text)
         if text == "？" or text == "?":
             return -2
 
     @classmethod
-    def dealAttack(cls, text: str) -> int:
+    def dealAttack(cls, text: str) -> int | None:
         text = text.lower()
         for x in ("atk", "攻击力", "打点", "攻击", "攻"):
             if text.startswith(x):
@@ -85,7 +98,7 @@ class SQLBuilder:
         return cls._dealAD(text)
 
     @classmethod
-    def dealDefence(cls, text: str) -> int:
+    def dealDefence(cls, text: str) -> int | None:
         text = text.lower()
         for x in ("def", "守备力", "防御力", "防御", "守备", "守", "防"):
             if text.startswith(x):
@@ -95,7 +108,7 @@ class SQLBuilder:
         return cls._dealAD(text)
 
     @staticmethod
-    def _dealADSum(text: str) -> int:
+    def _dealADSum(text: str) -> int | None:
         if text.isdigit():
             val = int(text)
             if val <= 10000:  # 4 位及以下的数，以及特例 10000
@@ -104,7 +117,7 @@ class SQLBuilder:
             return -4
 
     @classmethod
-    def dealAtkDefSum(cls, text: str) -> int:
+    def dealAtkDefSum(cls, text: str) -> int | None:
         text = text.lower()
         for x in (
             "攻守和",
@@ -124,14 +137,14 @@ class SQLBuilder:
         return cls._dealADSum(text)
 
     @staticmethod
-    def _dealMark(text: str) -> int:
+    def _dealMark(text: str) -> int | None:
         if text.isdigit():
             val = int(text)
             if 0 < val < 15:  # 1-15 的数
                 return val
 
     @classmethod
-    def dealLevel(cls, text: str) -> int:
+    def dealLevel(cls, text: str) -> int | None:
         text = text.lower()
         if text.startswith(("等级", "lv")):
             text = text[2:]
@@ -142,7 +155,7 @@ class SQLBuilder:
         return cls._dealMark(text)
 
     @classmethod
-    def dealRank(cls, text: str) -> int:
+    def dealRank(cls, text: str) -> int | None:
         text = text.lower()
         if text.startswith("阶级"):
             text = text[2:]
@@ -153,7 +166,7 @@ class SQLBuilder:
         return cls._dealMark(text)
 
     @classmethod
-    def dealLink(cls, text: str) -> int:
+    def dealLink(cls, text: str) -> int | None:
         text = text.lower()
         if text.startswith("link"):
             text = text[4:]
@@ -162,7 +175,7 @@ class SQLBuilder:
         return cls._dealMark(text)
 
     @classmethod
-    def dealPmark(cls, text: str) -> int:
+    def dealPmark(cls, text: str) -> int | None:
         text = text.lower()
         for x in ("灵摆", "刻度", "p"):
             if text.startswith(x):
@@ -172,7 +185,7 @@ class SQLBuilder:
         return cls._dealMark(text)
 
     @staticmethod
-    def dealId(text: str) -> int:
+    def dealId(text: str) -> int | None:
         # print(text)
         if text.isdigit() and len(text) > 4:  # 5 位及以上的数
             return int(text)
@@ -230,7 +243,7 @@ class SQLBuilder:
             kwsql = self._keywordSQL(kw)
             # names=("race","attribute","cardType","attack","defence")
             exception = ("keyword", "atkEqDef")
-            for name in (n for n in self._names if not n in exception):
+            for name in (n for n in self._names if n not in exception):
                 val = getattr(self, f"deal{self._upperFirst(name)}")(kw)  # self.dealXxx
                 if val is not None:
                     sqlfunc = getattr(self, f"_{name}SQL")  # self._xxxSQL
@@ -282,23 +295,9 @@ class SQLBuilder:
         if not item:
             return False
         for x in args:
-            if not x in item:
+            if x not in item:
                 return False
         return True
-
-    def _ensureCardType(cardType: CardType):
-        def deco(func):
-            def wrapper(self: "SQLBuilder", *args):
-                raw = func(self, *args)
-                if self._checkHas("cardType", cardType):
-                    return raw  # 原 SQL 条件
-                return (
-                    f"({raw} AND {self._cardTypeSQL(cardType)})"
-                )  # 附加上 CardType 条件
-
-            return wrapper
-
-        return deco
 
     def _keywordSQL(self, kw):
         self.params.append(f"%{kw}%")
@@ -347,7 +346,7 @@ class SQLBuilder:
 
     @_ensureCardType(CardType.Monster)
     def _atkEqDefSQL(self):
-        return f"(d.atk=d.def AND d.atk!=-2 AND d.def!=-2)"
+        return "(d.atk=d.def AND d.atk!=-2 AND d.def!=-2)"
         # return f"d.atk=d.def"
 
     def keyword(self, *args):

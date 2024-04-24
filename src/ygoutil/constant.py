@@ -45,7 +45,7 @@ class CardType(IntFlag):
     __repr__ = _repr
 
     @staticmethod
-    def fromStr(text):
+    def fromStr(text: str):
         return str2cardType.get(text)
 
 
@@ -97,7 +97,7 @@ class CardAttribute(IntFlag):
     __repr__ = _repr
 
     @staticmethod
-    def fromStr(text):
+    def fromStr(text: str):
         return str2cardAttribute.get(text)
 
 
@@ -149,7 +149,7 @@ class CardRace(IntFlag):
     __repr__ = _repr
 
     @staticmethod
-    def fromStr(text):
+    def fromStr(text: str):
         return str2cardRace.get(text)
 
 

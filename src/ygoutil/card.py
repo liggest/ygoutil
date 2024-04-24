@@ -19,7 +19,7 @@ class Card:
         self.cardType: set[CardType | str] = set()  # 卡片类型
         self.limit: str | None = None  # 禁限
 
-        self.category = set()  # 效果种类
+        self.category: set[CardCategory] = set()  # 效果种类
 
         self.alias = None  # 作为同名卡在数据库中的实际卡号
 
@@ -51,18 +51,22 @@ class Card:
 
     @property
     def isMonster(self):
+        """ 是怪兽卡 """
         return CardType.Monster in self.cardType
 
     @property
     def isXyz(self):
+        """ 是超量 """ 
         return CardType.Xyz in self.cardType
 
     @property
     def isP(self):
+        """ 是灵摆 """ 
         return CardType.Pendulum in self.cardType
 
     @property
     def isLink(self):
+        """ 是连接 """
         return CardType.Link in self.cardType
 
     def fillCardType(self, *types: CardType | str):
@@ -80,12 +84,12 @@ class Card:
             self.race = None  # 种族
             self.attribute = None  # 属性
             if self.isXyz:
-                self.rank = None
+                self.rank = None  # 阶级
             if self.isP:
-                self.Pmark = [None, None]
+                self.Pmark = [None, None]  # 刻度
             if self.isLink:
-                self.linknum = None
-                self.linkmark = set()
+                self.linknum = None  # link 数
+                self.linkmark: set[LinkMark] = set()
 
     @staticmethod
     def _checkAndFill(text, filltext: str, default=""):
@@ -93,31 +97,29 @@ class Card:
             return filltext.format(text)
         return default
 
-    def info(self):
-        result = ""
-        result += self._checkAndFill(self.name, "卡名 {}\n")
-        result += self._checkAndFill(self.jpname, "日文名 {}\n")
-        result += self._checkAndFill(self.enname, "英文名 {}\n")
+    def _infoGen(self):
+        yield self._checkAndFill(self.name, "卡名 {}\n")
+        yield self._checkAndFill(self.jpname, "日文名 {}\n")
+        yield self._checkAndFill(self.enname, "英文名 {}\n")
         if self.cardType:  # 卡片种类
-            result += f"{' '.join(str(ct) for ct in self.cardType)}\n"
+            yield f"{' '.join(str(ct) for ct in self.cardType)}\n"
         if self.isRD:
-            result += "RUSH DUEL  "
+            yield "RUSH DUEL  "
         else:
-            # result+=self._checkAndFill(self.id,"密码 {}  ")
-            result += self._checkAndFill(self.id, "{}  ")
-        result += self._checkAndFill(self.limit, "{}")  # 禁限
-        result += self._checkAndFill(self.ot, "  {}\n", "\n")  # O/T
+            yield self._checkAndFill(self.id, "{}  ")
+        yield self._checkAndFill(self.limit, "{}")  # 禁限
+        yield self._checkAndFill(self.ot, "  {}\n", "\n")  # O/T
         if self.set:  # 卡片字段
-            result += f"系列 {' '.join(self.set)}\n"
+            yield f"系列 {' '.join(self.set)}\n"
         if self.isMonster:
-            result += self._checkAndFill(str(self.race), "{}族")
-            result += self._checkAndFill(str(self.attribute), "  {}属性")
+            yield self._checkAndFill(str(self.race), "{}族")
+            yield self._checkAndFill(str(self.attribute), "  {}属性")
             if self.isXyz:
-                result += self._checkAndFill(self.rank, "  {}阶\n")
+                yield self._checkAndFill(self.rank, "  {}阶\n")
             if self.isLink:
-                result += self._checkAndFill(self.linknum, "  LINK-{}\n")
+                yield self._checkAndFill(self.linknum, "  LINK-{}\n")
                 # result+=self._checkAndFill(self.attack,"攻击力 {}\n")
-                result += self._checkAndFill(self.attack, "{}/-\n")
+                yield self._checkAndFill(self.attack, "{}/-\n")
                 middle = linkMark2str[len(linkMark2str) // 2]
                 # marklist=["   "]*8
                 # marklist=[middle]*8
@@ -129,20 +131,23 @@ class Card:
                     f"{marklist[3]}{middle}{marklist[4]}\n",
                     f"{marklist[0]}{marklist[1]}{marklist[2]}\n",
                 ]
-                result += "".join(line for line in marklines if line.strip())
+                yield "".join(line for line in marklines if line.strip())
             else:
                 if not self.isXyz:
-                    result += self._checkAndFill(self.level, "  {}星\n")
+                    yield self._checkAndFill(self.level, "  {}星\n")
                 # result+=self._checkAndFill(self.attack,"攻击力 {}")
                 # result+=self._checkAndFill(self.defence,"  守备力 {}\n")
-                result += self._checkAndFill(self.attack, "{}/")
-                result += self._checkAndFill(self.defence, "{}\n")
+                yield self._checkAndFill(self.attack, "{}/")
+                yield self._checkAndFill(self.defence, "{}\n")
             if self.isP:
                 if self.effect and not self.effect.startswith("←"):
-                    result += f"←{self.Pmark[0]} 【灵摆】 {self.Pmark[1]}→\n"
+                    yield f"←{self.Pmark[0]} 【灵摆】 {self.Pmark[1]}→\n"
         effecttext = self._checkAndFill(self.effect, "{}")
-        result += effecttext.replace("・", "·")
-        return result
+        yield effecttext.replace("・", "·")
+
+    def info(self):
+        """ 卡片信息 """
+        return "".join(self._infoGen())
 
     def fromCDBTuple(self, t, setdict: dict = None, lfdict: dict = None):
         self.name = t[0]
