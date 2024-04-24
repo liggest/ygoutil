@@ -141,6 +141,7 @@ class CardRace(IntFlag):
     CreatorGod = 0x400000
     Wyrm = 0x800000
     Cyberse = 0x1000000
+    Illusion=0x2000000
 
     def __str__(self):
         return cardRace2str.get(self) or super().__str__()
@@ -178,6 +179,7 @@ cardRace2str = {
     CardRace.CreatorGod: "创造神",
     CardRace.Wyrm: "幻龙",
     CardRace.Cyberse: "电子界",
+    CardRace.Illusion: "幻想魔"
 }
 
 str2cardRace = {v: k for k, v in cardRace2str.items()}
