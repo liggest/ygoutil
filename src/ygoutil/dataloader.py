@@ -3,7 +3,10 @@ import sqlite3
 
 # import os
 from enum import Enum
-import typing
+from typing import Iterable, TYPE_CHECKING
+from typing_extensions import Self
+from pathlib import Path
+
 from ygoutil.sqlbuilder import SQLBuilder
 
 
@@ -22,12 +25,12 @@ class ShrinkLevel(str, Enum):
     NoMain = S4
 
     @classmethod
-    def fromInt(
-        cls, i: typing.Union[int, "ShrinkLevel", typing.List[int]]
-    ) -> "ShrinkLevel":
+    def fromInt(cls, i: int | Self | Iterable[int]) -> Self | str:
         if isinstance(i, cls):
             return i
-        if isinstance(i, list):
+        if TYPE_CHECKING:
+            assert not isinstance(i, ShrinkLevel)
+        if isinstance(i, Iterable):
             return " AND ".join([cls.fromInt(x) for x in i if x])  # x!=0 and x!=S0
         return getattr(cls, f"S{i}")
 
@@ -44,7 +47,7 @@ def WHERE(s: str):
     return s
 
 
-class cdbReader:
+class CDBReader:
     def __init__(self, path=None):
         self.cdbpath = path
         self.conn = None
@@ -85,6 +88,7 @@ class cdbReader:
         return list(set(lst))
 
     def getCardByID(self, id: int):  # id是整数
+        assert self.cursor
         self.cursor.execute(
             "SELECT t.name,t.DESC,d.* FROM texts t INNER JOIN datas d ON t.id=d.id WHERE t.id=?",
             (id,),
@@ -93,14 +97,16 @@ class cdbReader:
         return self.cursor.fetchone()
 
     def getCardsByIDs(self, *ids):  # ids是元祖、列表之类的
-        sql = "SELECT t.name,t.DESC,d.* FROM texts t INNER JOIN datas d ON t.id=d.id WHERE t.id IN "
-        sql += cdbReader.listOfSQL(len(ids))
+        assert self.cursor
+        sql = f"SELECT t.name,t.DESC,d.* FROM texts t INNER JOIN datas d ON t.id=d.id WHERE t.id IN {
+            CDBReader.listOfSQL(len(ids))}"
         # print(sql)
         # print(ids)
         self.cursor.execute(sql, tuple(ids))
         return self.cursor.fetchall()
 
     def getIDsByName(self, name):  # name是字符串 完全匹配
+        assert self.cursor
         self.cursor.execute("SELECT id FROM texts WHERE name=?", (name,))
         ids = self.cursor.fetchall()
         return [x[0] for x in ids]
@@ -111,11 +117,13 @@ class cdbReader:
             return self.getCardsByIDs(*ids)
 
     def getCardCount(self, shrink=0):  # full 0 全部 1 无衍生物 2 无同名卡无衍生物
+        assert self.cursor
         level = ShrinkLevel.fromInt(shrink)
         self.cursor.execute(f"SELECT COUNT(*) FROM datas {WHERE(level)}")
         return self.cursor.fetchall()[0]
 
     def getRandomIDs(self, count=1, shrink=0):
+        assert self.cursor
         level = ShrinkLevel.fromInt(shrink)
         self.cursor.execute(
             f"SELECT id FROM datas {WHERE(level)} ORDER BY RANDOM() limit ?", (count,)
@@ -124,9 +132,10 @@ class cdbReader:
         return [x[0] for x in ids]
 
     def getRandomNames(self, count=1, shrink=0):
+        assert self.cursor
         ids = self.getRandomIDs(count, shrink)
         self.cursor.execute(
-            f"SELECT name FROM texts WHERE id IN {cdbReader.listOfSQL(len(ids))}",
+            f"SELECT name FROM texts WHERE id IN {CDBReader.listOfSQL(len(ids))}",
             tuple(ids),
         )
         names = self.cursor.fetchall()
@@ -139,6 +148,7 @@ class cdbReader:
         pass
 
     def getCardsByBuilder(self, builder: SQLBuilder, num=50):
+        assert self.cursor
         tail = f"ORDER BY d.level & 15 DESC,d.type LIMIT {num}"  # 15=>0b1111
         sql = builder.resolve()
         sql = f"{sql} {tail}"
@@ -151,6 +161,7 @@ class cdbReader:
         return self.cursor.fetchall()
 
     def getYDCards(self):
+        assert self.cursor
         self.cursor.execute(
             "SELECT id FROM datas WHERE type & 0x48060C0=0 ORDER BY RANDOM() limit 60"
         )
@@ -163,14 +174,15 @@ class cdbReader:
         extra = [x[0] for x in extra]
         return [main, extra]
 
+class ConfReader:
+    def __init__(self, path: str | Path = None):
+        self.filepath = Path(path) if path else path
 
-class confReader:
-    def __init__(self, path=None):
-        self.filepath = path
-
-    def loadLFlist(self, path=None):
+    def loadLFlist(self, path: str | Path = None):
         if path:
-            self.filepath = path
+            self.filepath = Path(path)
+        if TYPE_CHECKING:
+            assert isinstance(self.filepath, Path)
         self.lfdict = {}
         start = False
         with open(self.filepath, "r", encoding="utf-8") as f:
@@ -186,9 +198,11 @@ class confReader:
                         self.lfname = line[1:]
                         start = True
 
-    def loadSets(self, path=None):
+    def loadSets(self, path: str | Path = None):
         if path:
-            self.filepath = path
+            self.filepath = Path(path)
+        if TYPE_CHECKING:
+            assert isinstance(self.filepath, Path)
         self.setdict = {}
         with open(self.filepath, "r", encoding="utf-8") as f:
             for line in f:
@@ -198,13 +212,13 @@ class confReader:
 
 
 if __name__ == "__main__":
-    conf = confReader()
+    conf = ConfReader()
     conf.loadLFlist("./ygo/lflist.conf")
     conf.loadSets("./ygo/strings.conf")
     # print(conf.lfname)
     # print(conf.lfdict)
     # print(conf.setdict)
-    cdb = cdbReader()
+    cdb = CDBReader()
     cdb.connect("./ygo/cards.cdb")
     ipt = ""
     # result=cdb.getCardsByIDs([1861629, 1861630])
