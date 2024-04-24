@@ -29,16 +29,16 @@ class Card:
             self.fillCardType(*types)
             self.initMonster()  # 根据卡片类型初始化怪兽信息
         # 一系列链接
-        self.img = None  # 卡图链接
-        self.url = None  # 卡片信息来源链接
-        self.database = None
-        self.QA = None
-        self.wiki = None
-        self.yugipedia = None
+        self.img: str | None = None  # 卡图链接
+        self.url: str | None = None  # 卡片信息来源链接
+        self.database: str | None = None
+        self.QA: str | None = None
+        self.wiki: str | None = None
+        self.yugipedia: str | None = None
         # self.ygorg=None
-        self.ourocg = None
-        self.script = None  # 脚本链接
-        self.ocgRule = None
+        self.ourocg: str | None = None
+        self.script: str | None = None  # 脚本链接
+        self.ocgRule: str | None = None
 
     def __str__(self):
         return self.info()
