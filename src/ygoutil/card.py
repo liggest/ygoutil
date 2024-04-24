@@ -9,15 +9,15 @@ class Card:
 
     def __init__(self, types: Iterable[CardType | str] = None):
         self.id = None  # 卡号
-        self.name: str = None  # 卡名（中文）
-        self.jpname: str = None  # 卡名（日文）
-        self.enname: str = None  # 卡名（英文）
-        self.effect: str = None  # 效果文本
+        self.name: str | None = None  # 卡名（中文）
+        self.jpname: str | None = None  # 卡名（日文）
+        self.enname: str | None = None  # 卡名（英文）
+        self.effect: str | None = None  # 效果文本
 
-        self.ot: str = None  # ot状态
+        self.ot: str | None = None  # ot状态
         self.set = set()  # 系列
-        self.cardType = set()  # 卡片类型
-        self.limit: str = None  # 禁限
+        self.cardType: set[CardType | str] = set()  # 卡片类型
+        self.limit: str | None = None  # 禁限
 
         self.category = set()  # 效果种类
 
@@ -203,6 +203,7 @@ class Card:
 
     @staticmethod
     def bit2Item(bit, enum: type[Enum]):
+        r = None
         if any((r := x) for x in enum if x.value & bit != 0):
             return r
         return None
@@ -213,11 +214,11 @@ class Card:
     #         return func(bit,enum)
     #     return wrapper
 
-    bit2CardTypes = partialmethod(bit2Set, enum=CardType)
-    bit2Race = partialmethod(bit2Item, enum=CardRace)
-    bit2Attribute = partialmethod(bit2Item, enum=CardAttribute)
-    bit2LinkMark = partialmethod(bit2Set, enum=LinkMark)
-    bit2Category = partialmethod(bit2Set, enum=CardCategory)
+    bit2CardTypes: partialmethod[set[CardType | str]] = partialmethod(bit2Set, enum=CardType)
+    bit2Race: partialmethod[CardRace] = partialmethod(bit2Item, enum=CardRace)
+    bit2Attribute: partialmethod[CardAttribute] = partialmethod(bit2Item, enum=CardAttribute)
+    bit2LinkMark: partialmethod[set[LinkMark]] = partialmethod(bit2Set, enum=LinkMark)
+    bit2Category: partialmethod[set[CardCategory]] = partialmethod(bit2Set, enum=CardCategory)
     # bit2CardTypes=funcWithEnum.__func__(bit2Set.__func__,CardType)
     # bit2Race=funcWithEnum.__func__(bit2Item.__func__,CardRace)
     # bit2Attribute=funcWithEnum.__func__(bit2Item.__func__,CardAttribute)

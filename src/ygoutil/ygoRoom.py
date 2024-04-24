@@ -2,7 +2,7 @@ import os
 import yaml
 import random
 
-from ygoutil.dataloader import cdbReader
+from ygoutil.dataloader import CDBReader
 
 
 class YGORoom:
@@ -78,7 +78,7 @@ class YGORoom:
 
     @classmethod
     def getMemberRoom(cls, key):
-        roomInfo: dict = cls.memberRooms.get(key)
+        roomInfo: dict | None = cls.memberRooms.get(key)
         if roomInfo:
             room = cls.parseRoom(roomInfo["room"])
             room.serverName = roomInfo.get("server")
@@ -108,7 +108,7 @@ class YGORoom:
         return f"{action}了房间"
 
     @classmethod
-    def randomRoomName(cls, cdb: cdbReader):
+    def randomRoomName(cls, cdb: CDBReader):
         result = []
         with cdb:
             ct = cdb.getRandomNames(count=random.randint(1, 4))
