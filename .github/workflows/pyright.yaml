@@ -1,0 +1,20 @@
+name: pyright
+
+on: [push]
+
+jobs:
+  pyright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version-file: pyproject.toml
+          cache: true
+      - name: Install dependencies
+        run: pdm install --prod
+      - name: Add bin to PATH
+        run: echo "$PWD/.venv/bin" >> $GITHUB_PATH
+      - name: Run pyright
+        uses: jakebailey/pyright-action@v2
