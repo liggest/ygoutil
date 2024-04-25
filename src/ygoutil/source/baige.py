@@ -49,7 +49,7 @@ class BaiGe:
             res = await client.get(url)
             return res.text
 
-    def html2Card(self, html, cardPage=False):
+    def html2Card(self, html, cardPage=False) -> Card | None:
         html = BeautifulSoup(html, "lxml")
         if cardPage:
             divs = html.find_all("div", {"class": "row card detail"})

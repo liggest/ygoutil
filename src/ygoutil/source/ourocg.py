@@ -17,7 +17,7 @@ except ImportError:
 from ygoutil.card import Card, CardAttribute, CardRace, LinkMark
 
 
-class ourocg:
+class OurOCG:
     def __init__(self):
         self.edition = 2
 
@@ -119,19 +119,19 @@ class ourocg:
             c.race = CardRace.fromStr(divr[otnum + 1][0])
             c.attribute = CardAttribute.fromStr(divr[otnum + 2][0])
             if c.isXyz:
-                c.rank = ourocg.dealInt(divr[otnum + 3][0])
+                c.rank = OurOCG.dealInt(divr[otnum + 3][0])
                 c.level = c.rank
             if c.isP:
                 # c.Pmark=Pmark
                 c.Pmark = [cardJson.get("pend_l", None), cardJson.get("pend_r", None)]
             if c.isLink:
-                c.linknum = ourocg.dealInt(divr[otnum + 5][0])
+                c.linknum = OurOCG.dealInt(divr[otnum + 5][0])
                 c.level = c.linknum
-                c.attack = ourocg.dealInt(divr[otnum + 4][0])
+                c.attack = OurOCG.dealInt(divr[otnum + 4][0])
             else:
-                c.level = ourocg.dealInt(divr[otnum + 3][0])
-                c.attack = ourocg.dealInt(divr[otnum + 4][0])
-                c.defence = ourocg.dealInt(divr[otnum + 5][0])
+                c.level = OurOCG.dealInt(divr[otnum + 3][0])
+                c.attack = OurOCG.dealInt(divr[otnum + 4][0])
+                c.defence = OurOCG.dealInt(divr[otnum + 5][0])
         L = len(divr[effectnum])
         tempString = divr[effectnum][-1]
         effectlist = [0]
@@ -145,7 +145,7 @@ class ourocg:
             effectlist[self.edition] : effectlist[self.edition + 1]
         ]
         effectText = "\n".join(effects)
-        c.effect = ourocg.beautifyText(effectText)
+        c.effect = OurOCG.beautifyText(effectText)
         return c
 
     def FindCardByName(self, searchtext):
@@ -175,7 +175,7 @@ class ourocg:
 
     def getWikiLink(self, card):
         if card.jpname:
-            pageword = f"《{ourocg.towikistr(card.jpname)}》"
+            pageword = f"《{OurOCG.towikistr(card.jpname)}》"
         elif card.enname:
             pageword = f"《{card.enname}》"
         else:
@@ -247,7 +247,7 @@ if __name__ == "__main__":
 
     async def main():
         text = input()
-        a = ourocg()
+        a = OurOCG()
         print(await a.AsyncSearchByName(text))
 
     import asyncio
