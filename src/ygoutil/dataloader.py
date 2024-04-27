@@ -1,7 +1,6 @@
 # import functools
 import sqlite3
 
-# import os
 from enum import Enum
 from typing import Iterable, TYPE_CHECKING
 from typing_extensions import Self
@@ -98,8 +97,7 @@ class CDBReader:
 
     def getCardsByIDs(self, *ids):  # ids是元祖、列表之类的
         assert self.cursor
-        sql = f"SELECT t.name,t.DESC,d.* FROM texts t INNER JOIN datas d ON t.id=d.id WHERE t.id IN {
-            CDBReader.listOfSQL(len(ids))}"
+        sql = f"SELECT t.name,t.DESC,d.* FROM texts t INNER JOIN datas d ON t.id=d.id WHERE t.id IN {CDBReader.listOfSQL(len(ids))}"
         # print(sql)
         # print(ids)
         self.cursor.execute(sql, tuple(ids))
