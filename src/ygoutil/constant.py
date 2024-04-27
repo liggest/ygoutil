@@ -1,9 +1,9 @@
 
 from typing import TYPE_CHECKING, Any
-from enum import Enum, IntFlag, Flag
+from enum import Enum, IntFlag
 
-def _repr(self: Flag):
-    return f"{self.name}({hex(self.value)})"
+def _repr(self: IntFlag):
+    return f"{self.name or self.__class__.__name__}({hex(self.value)})"
 
 if TYPE_CHECKING:
     def _repr(self: Any) -> str:
