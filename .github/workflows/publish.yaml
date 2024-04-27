@@ -1,0 +1,24 @@
+name: publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  pypi-publish:
+    name: Upload release to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      # 这个权限是为了私有仓库。
+      contents: read
+      # 重要提示：这个权限对于可信发布是必需的。
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: '3.10'
+          cache: true
+      - name: Publish
+        run: pdm publish

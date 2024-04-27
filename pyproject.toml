@@ -1,6 +1,6 @@
 [project]
 name = "ygoutil"
-version = "0.1.0"
+dynamic = ["version"]
 description = "一个 ygo 工具集"
 authors = [
     {name = "liggest"},
@@ -24,6 +24,11 @@ build-backend = "pdm.backend"
 
 [tool.pdm]
 distribution = true
+
+[tool.pdm.version]
+source = "file"
+path = "src/ygoutil/__version__.py"
+
 [tool.pdm.dev-dependencies]
 dev = [
     "pytest>=8.1.1",
