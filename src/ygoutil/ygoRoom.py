@@ -1,14 +1,15 @@
-import os
-import yaml
 import random
+from pathlib import Path
+
+import tomli
+import tomli_w
 
 from ygoutil.dataloader import CDBReader
 
-
 class YGORoom:
-    ygodir = ""
+    ygodir = Path()
 
-    roomFile = "MemberRoom.yaml"
+    roomFile = "MemberRoom.toml"
     memberRooms = {}
     servers = {}
 
@@ -51,10 +52,11 @@ class YGORoom:
 
     @classmethod
     def initDuel(cls, ygodir, servers):
-        roomFilePath = os.path.join(ygodir, cls.roomFile)
-        if os.path.exists(roomFilePath):
-            with open(roomFilePath, encoding="utf-8") as f:
-                cls.memberRooms = yaml.safe_load(f)
+        ygodir = Path(ygodir)
+        roomFilePath = ygodir / cls.roomFile
+        if roomFilePath.exists():
+            with open(roomFilePath, "rb") as f:
+                cls.memberRooms = tomli.load(f)
         cls.servers = servers
         cls.ygodir = ygodir
 
@@ -62,9 +64,9 @@ class YGORoom:
     def saveDuel(cls):
         if not cls.memberRooms:
             return
-        roomFilePath = os.path.join(cls.ygodir, cls.roomFile)
-        with open(roomFilePath, "w", encoding="utf-8") as f:
-            yaml.safe_dump(cls.memberRooms, f, encoding="utf-8", allow_unicode=True)
+        roomFilePath = cls.ygodir / cls.roomFile
+        with open(roomFilePath, "wb") as f:
+            tomli_w.dump(cls.memberRooms, f)
 
     @classmethod
     def parseRoom(cls, roomText: str):
