@@ -21,17 +21,21 @@ async def download(url: str, file: Path):
                     f.write(chunk)
     return file
 
-@pytest_asyncio.fixture(scope="module")
-async def cdb_file(tmp_path: Path):
-    return await download(Links.cdb, tmp_path / "cards.cdb")
+@pytest.fixture(scope="module")
+def temp_dir(tmp_path_factory: pytest.TempPathFactory):
+    return tmp_path_factory.mktemp("ygo")
 
 @pytest_asyncio.fixture(scope="module")
-async def strings_file(tmp_path: Path):
-    return await download(Links.strings, tmp_path / "strings.conf")
+async def cdb_file(temp_dir):
+    return await download(Links.cdb, temp_dir / "cards.cdb")
 
 @pytest_asyncio.fixture(scope="module")
-async def lflist_file(tmp_path: Path):
-    return await download(Links.lflist, tmp_path / "lflist.conf")
+async def strings_file(temp_dir: Path):
+    return await download(Links.strings, temp_dir / "strings.conf")
+
+@pytest_asyncio.fixture(scope="module")
+async def lflist_file(temp_dir: Path):
+    return await download(Links.lflist, temp_dir / "lflist.conf")
 
 @pytest.fixture
 def conf_reader(strings_file, lflist_file):
