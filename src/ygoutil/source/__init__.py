@@ -1,5 +1,5 @@
 
-from ygoutil.source.baige import BaiGe
-from ygoutil.source.ourocg import OurOCG
+from ygoutil.source.baige import BaiGe, BaiGePage
+from ygoutil.source.ourocg import OurOcg
 
-__all__ = [ "BaiGe", "OurOCG" ]
+__all__ = [ "BaiGe", "BaiGePage", "OurOcg" ]

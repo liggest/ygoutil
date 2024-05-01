@@ -1,4 +1,4 @@
-from ygoutil.constant import CardType, CardRace, CardAttribute
+from ygoutil.card.constant import CardType, CardRace, CardAttribute
 
 def _ensureCardType(cardType: CardType):
         def deco(func):
@@ -57,13 +57,13 @@ class SQLBuilder:
     def dealRace(text: str) -> CardRace | None:
         if text.endswith("族"):
             text = text[:-1]
-        return CardRace.fromStr(text)
+        return CardRace.from_str(text)
 
     @staticmethod
     def dealAttribute(text: str) -> CardAttribute | None:
         if text.endswith("属性"):
             text = text[:-2]
-        return CardAttribute.fromStr(text)
+        return CardAttribute.from_str(text)
 
     @staticmethod
     def dealCardType(text: str) -> CardType | None:
@@ -74,8 +74,8 @@ class SQLBuilder:
         # if (text.endswith("怪兽") and text!="怪兽") or (text.endswith("魔法") and text!="魔法") or (text.endswith("陷阱") and text!="陷阱"):
         if base in ("怪兽", "魔法", "陷阱") and text != base:
             text = text[:-2]
-            baseType = CardType.fromStr(base)
-        textType = CardType.fromStr(text)
+            baseType = CardType.from_str(base)
+        textType = CardType.from_str(text)
         if baseType is not None and textType is not None:
             textType |= baseType
         return textType

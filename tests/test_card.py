@@ -1,5 +1,5 @@
 
-from ygoutil.constant import CardType
+from ygoutil.card.constant import CardType
 
 def test_constant():
     assert CardType.Token

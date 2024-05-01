@@ -1,6 +1,6 @@
 
 from typing import TYPE_CHECKING, Any
-from enum import Enum, IntFlag
+from enum import IntFlag, IntEnum
 
 def _repr(self: IntFlag):
     return f"{self.name or self.__class__.__name__}({hex(self.value)})"
@@ -8,9 +8,12 @@ def _repr(self: IntFlag):
 if TYPE_CHECKING:
     def _repr(self: Any) -> str:
         raise NotImplementedError
+    
 
 class CardType(IntFlag):
     """ 卡片种类 """
+    Unknown = 0x0
+
     Monster = 0x1
     Spell = 0x2
     Trap = 0x4
@@ -45,11 +48,13 @@ class CardType(IntFlag):
     __repr__ = _repr
 
     @staticmethod
-    def fromStr(text: str):
+    def from_str(text: str):
         return str2cardType.get(text)
 
 
 cardType2str = {
+    CardType.Unknown: "未知",
+
     CardType.Monster: "怪兽",
     CardType.Normal: "通常",
     CardType.Effect: "效果",
@@ -79,10 +84,14 @@ cardType2str = {
 
 str2cardType = {v: k for k, v in cardType2str.items()}
 str2cardType["XYZ"] = CardType.Xyz
+str2cardType["P"] = CardType.Pendulum
+str2cardType["link"] = CardType.Link
 
 
 class CardAttribute(IntFlag):
     """ 卡片属性 """
+    Unknown = 0x00
+
     Earth = 0x01
     Water = 0x02
     Fire = 0x04
@@ -97,11 +106,13 @@ class CardAttribute(IntFlag):
     __repr__ = _repr
 
     @staticmethod
-    def fromStr(text: str):
+    def from_str(text: str):
         return str2cardAttribute.get(text)
 
 
 cardAttribute2str = {
+    CardAttribute.Unknown: "未知",
+
     CardAttribute.Earth: "地",
     CardAttribute.Water: "水",
     CardAttribute.Fire: "炎",
@@ -116,6 +127,8 @@ str2cardAttribute = {v: k for k, v in cardAttribute2str.items()}
 
 class CardRace(IntFlag):
     """ 卡片种族 """
+    Unknown = 0x0
+
     Warrior = 0x1
     Spellcaster = 0x2
     Fairy = 0x4
@@ -149,11 +162,13 @@ class CardRace(IntFlag):
     __repr__ = _repr
 
     @staticmethod
-    def fromStr(text: str):
+    def from_str(text: str):
         return str2cardRace.get(text)
 
 
 cardRace2str = {
+    CardRace.Unknown: "未知",
+
     CardRace.Warrior: "战士",
     CardRace.Spellcaster: "魔法师",
     CardRace.Fairy: "天使",
@@ -188,6 +203,8 @@ str2cardRace["爬虫"] = CardRace.Reptile
 
 class LinkMark(IntFlag):
     """ 连接标记 """
+    Unknown = 0x000
+
     BottomLeft = 0x001
     Bottom = 0x002
     BottomRight = 0x004
@@ -198,30 +215,53 @@ class LinkMark(IntFlag):
     Top = 0x080
     TopRight = 0x100
 
-    def toNumber(self):  # 1-9
+    def to_number(self):  # 1-9
         binstr = bin(self.value)[2:]  # "0b01" => "01"  len("01")=2
         return len(binstr)
 
     def __str__(self):
-        return linkMark2str[self.toNumber() - 1]
+        return LinkMarkStyle.to(self.to_number() - 1)
 
     __repr__ = _repr
 
     @staticmethod
-    def fromNumber(num, withMid=False):  # num: 1-9
-        if withMid and num > 4:
+    def from_number(num: int, with_mid=False):  # num: 1-9
+        if with_mid and num > 4:
             num -= 1
         # return number2linkMark[num-1]
-        return list(LinkMark)[num - 1]
+        # return list(LinkMark)[num - 1]
+        return LinkMark(1 << (num - 1))
 
+class LinkMarkStyle:
+
+    _style = ("↙️", "⬇️", "↘️", "⬅️", "⬜", "➡️", "↖️", "⬆️", "↗️")
+
+    @classmethod
+    def style(cls, num: int):
+        cls._style = (
+            ("↙️", "⬇️", "↘️", "⬅️", "⬜", "➡️", "↖️", "⬆️", "↗️"),
+            ("↙", "⬇", "↘", "⬅", "    ", "➡", "↖", "⬆", "↗"),
+            (" ◣", " ↓ ", "◢ ", "←", "   ", "→", " ◤", " ↑ ", "◥ "),
+            # ("↙", "↓", "↘", "←", "   ", "→", "↖", "↑", "↗"),
+        )[num]
+        return cls._style
+
+    @classmethod
+    def to(cls, num: int):
+        return cls._style[num]
+    
+    @classmethod
+    def middle(cls):
+        return cls._style[4]
 
 # number2linkMark=[lm for lm in LinkMark]
 # linkMark2str=[" ◣"," ↓ ","◢ ","←","   ","→"," ◤"," ↑ ","◥ "]
-linkMark2str = ["↙", "⬇", "↘", "⬅", "    ", "➡", "↖", "⬆", "↗"]  # "⏺"
+# linkMark2str = ["↙", "⬇", "↘", "⬅", "    ", "➡", "↖", "⬆", "↗"]  # "⏺"
 
-
-class CardCategory(Enum):
+class CardCategory(IntFlag):
     """ 效果分类 """
+    未知 = 0x00
+
     魔陷破坏 = 0x01  # SpellTrapDestroy=0x01
     怪兽破坏 = 0x02  # MonsterDestroy=0x02
     除外 = 0x04  # Remove=0x04
@@ -260,6 +300,37 @@ class CardCategory(Enum):
 
     __repr__ = _repr
 
+class CardOT(IntFlag):
+    """ 卡片所属规则 """
+    Unknown = 0x0
+
+    OCG = 0b01
+    TCG = 0b10
+    # OCG_TCG = 0b11
+    Custom = 0b100
+    SC = 0b1000
+    # SC_OCG = 0b1001
+    # SC_TCG = 0b1010
+    # SC_OCG_TCG = 0b1011
+
+    __repr__ = _repr
+
+class CardLF(IntEnum):
+    """ 卡片禁限 """
+    禁止 = 0
+    限制 = 1
+    准限制 = 2
+    无限制 = 3
+
+    def __str__(self):
+        return self.name
+    
+    @staticmethod
+    def from_str(text: str):
+        try:
+            return CardLF[text]
+        except KeyError:
+            return None
 
 if __name__ == "__main__":
     print(CardType.Token)

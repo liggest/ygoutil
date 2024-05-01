@@ -2,7 +2,7 @@
 import pytest
 
 from ygoutil.sqlbuilder import SQLBuilder
-from ygoutil.constant import CardType
+from ygoutil.card.constant import CardType
 
 @pytest.fixture
 def builder():

@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Iterable
 from functools import partialmethod
 
-from ygoutil.constant import CardType, CardRace, CardAttribute, LinkMark, linkMark2str, CardCategory
+from ygoutil.card.constant import CardType, CardRace, CardAttribute, LinkMark, LinkMarkStyle, CardCategory
 
 class Card:
     """YGO 卡片"""
@@ -71,7 +71,7 @@ class Card:
 
     def fillCardType(self, *types: CardType | str):
         for t in types:
-            if isinstance(t, str) and (ct := CardType.fromStr(t)):
+            if isinstance(t, str) and (ct := CardType.from_str(t)):
                 self.cardType.add(ct)
             else:
                 self.cardType.add(t)
@@ -110,7 +110,7 @@ class Card:
         yield self._checkAndFill(self.limit, "{}")  # 禁限
         yield self._checkAndFill(self.ot, "  {}\n", "\n")  # O/T
         if self.set:  # 卡片字段
-            yield f"系列 {' '.join(self.set)}\n"
+            yield f"{' '.join(self.set)}\n"
         if self.isMonster:
             yield self._checkAndFill(str(self.race), "{}族")
             yield self._checkAndFill(str(self.attribute), "  {}属性")
@@ -120,7 +120,8 @@ class Card:
                 yield self._checkAndFill(self.linknum, "  LINK-{}\n")
                 # result+=self._checkAndFill(self.attack,"攻击力 {}\n")
                 yield self._checkAndFill(self.attack, "{}/-\n")
-                middle = linkMark2str[len(linkMark2str) // 2]
+                # middle = linkMark2str[len(linkMark2str) // 2]
+                middle = LinkMarkStyle.middle()
                 # marklist=["   "]*8
                 # marklist=[middle]*8
                 marklist = [
@@ -186,7 +187,7 @@ class Card:
                 self.Pmark = Card.getPmark(t[9])
             self.race = Card.bit2Race(t[10])
             self.attribute = Card.bit2Attribute(t[11])
-            self.category = Card.bit2Category(t[12])
+        self.category = Card.bit2Category(t[12])
 
     @staticmethod
     def dealAtkDef(val):
