@@ -1,7 +1,7 @@
 [project]
 name = "ygoutil"
 dynamic = ["version"]
-description = "一个 ygo 工具集"
+description = "一个 ygo 工具集 | Handy tools for ygo"
 authors = [
     {name = "liggest"},
 ]
