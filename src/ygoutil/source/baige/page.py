@@ -122,7 +122,7 @@ class BaiGePage(CardSource):
                     assert isinstance(alink, str)
                 if aname in self.link_name:
                     setattr(c._url_unit, self.link_name[aname], alink)
-                elif hasattr(c, aname):
+                elif hasattr(c._url_unit, aname):
                     setattr(c._url_unit, aname, alink)
                 elif aname.startswith("详情"):
                     if alink.endswith("#faq"):  # /card/xxxx#faq

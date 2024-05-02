@@ -4,7 +4,7 @@ import pytest
 from ygoutil.card import CardType, LinkMark
 from ygoutil.card.ids import CnJpEnIDCard
 from ygoutil.source import BaiGe
-from ygoutil.source.baige import BaiGePage, BaiGeNameUnit, BaiGeExtraUnit
+from ygoutil.source.baige import BaiGePage, BaiGeNameUnit, BaiGeExtraUnit, BaiGeURLUnit
 
 @pytest.fixture(scope="module")
 def baige():
@@ -22,6 +22,7 @@ async def test_baige(baige: BaiGe):
     assert card.name == "形态变化" and card.names.jp_name == "フォーム・チェンジ"
     assert isinstance(card.extras, BaiGeExtraUnit)
     assert card.extras.c_id == 9068
+    assert card.extras.faqs
 
 @pytest.mark.asyncio
 async def test_baige_multiple(baige: BaiGe):
@@ -48,6 +49,16 @@ async def test_baige_page(baige_page: BaiGePage):
     assert card.monster
     assert card.monster.link.link == 3
     assert card.monster.link.marks == LinkMark.BottomLeft | LinkMark.BottomRight | LinkMark.Top
+    assert isinstance(card.urls, BaiGeURLUnit)
+    assert card.urls.database_cn
+    assert card.urls.database_en
+    assert card.urls.database_jp
+    assert card.urls.QA
+    assert card.urls.wiki
+    assert card.urls.yugipedia
+    assert card.urls.ourocg
+    assert card.urls.script
+    assert card.urls.ocg_rule
 
 @pytest.mark.asyncio
 async def test_baige_page_multiple(baige_page: BaiGePage):
