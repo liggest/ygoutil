@@ -23,9 +23,10 @@ class BaiGePage(CardSource):
 
     @property
     def link(self):
+        """ 网页链接 """
         return Site.base_url
 
-    link_mark = {
+    _link_mark = {
         "↙": LinkMark.BottomLeft,
         "↓": LinkMark.Bottom,
         "↘": LinkMark.BottomRight,
@@ -36,16 +37,17 @@ class BaiGePage(CardSource):
         "↗": LinkMark.TopRight,
     }
 
-    link_name = {"数据库": "database", "db": "database", 
+    _link_name = {"数据库": "database", "db": "database", 
                 "日文": "database_jp", "英文": "database_en", "简中": "database_cn",
                 "q&a": "QA", "脚本": "script", "裁定": "ocg_rule"}
 
     @staticmethod
-    def img_link(card_id):
+    def img_link(card_id: int | str):
+        """ 卡图链接 """
         return Site.card_page_url(card_id)
 
-    def get_html(self, url):
-        res = httpx.get(url, timeout=20)
+    def _get_html(self, url, params=None):
+        res = httpx.get(url, params=params, timeout=20)
         return res.text
 
     # async def asyncGetHTML(self, url):
@@ -53,7 +55,7 @@ class BaiGePage(CardSource):
     #         res = await client.get(url)
     #         return res.text
 
-    def html2Card(self, html, card_page=False) -> Generator[Card, None, None]:
+    def _html2Card(self, html, card_page=False) -> Generator[Card, None, None]:
         html = BeautifulSoup(html, "lxml")
         divs = self._html2divs(html, card_page)
         if not divs:
@@ -107,7 +109,7 @@ class BaiGePage(CardSource):
             c = Card.from_types(*types)
             if TYPE_CHECKING:
                 assert info[1].h2
-            names = c.names = BaiGeNameUnit(c)
+            names = c._name_unit = BaiGeNameUnit(c)
             c._extra_unit = BaiGeExtraUnit(c)
             (c.id, c._extra_unit.c_id, names.cn_name, names.jp_name, names.en_name, names.jp_ruby) = self._div_id_names(info)
             # c.database,c.QA,c.wiki,c.yugipedia,c.ygorg,c.ourocg,c.script,c.ocgRule=[
@@ -120,8 +122,8 @@ class BaiGePage(CardSource):
                 alink = atag.get("href")
                 if TYPE_CHECKING:
                     assert isinstance(alink, str)
-                if aname in self.link_name:
-                    setattr(c._url_unit, self.link_name[aname], alink)
+                if aname in self._link_name:
+                    setattr(c._url_unit, self._link_name[aname], alink)
                 elif hasattr(c._url_unit, aname):
                     setattr(c._url_unit, aname, alink)
                 elif aname.startswith("详情"):
@@ -182,7 +184,7 @@ class BaiGePage(CardSource):
                     for m in marks:
                         m = m.strip("[")
                         if m:
-                            c.monster.levels.marks |= self.link_mark[m]
+                            c.monster.levels.marks |= self._link_mark[m]
                 if c.monster._pmark_unit:
                     if data:
                         marks = data.pop(0).split("/")  # 4/4
@@ -198,21 +200,22 @@ class BaiGePage(CardSource):
                     #     desc = desc.format(p="【怪兽效果】")
                     # else:
                     #     desc = desc.format(p="【怪兽描述】")
-                    c.texts = PTextUnit(c)
-                    c.texts.p_text = pdesc.strip()
-            c.texts._text = desc.strip()
+                    c._text_unit = PTextUnit(c)
+                    c._text_unit.p_text = pdesc.strip()
+            c._text_unit._text = desc.strip()
             # cards.append(c)
             yield c
 
             # return c  # 先只找一张卡
 
-    def search(self, text: str | int, by_id=False):
-        if by_id:
-            url = f"{self.link}card/{text}"  # text是卡号
-        else:
-            url = f"{self.link}?search={text}"
-        html = self.get_html(url)
-        return next(self.html2Card(html, card_page=by_id), None)
+    def _search(self, text: str | int, by_id=False):
+        text = str(text)
+        url, params = self._request_url_params(text, by_id)
+        html = self._get_html(url, params)
+        self.current_query = QueryInfo(text)
+        if card := next(self._html2Card(html, card_page=by_id), None):
+            self.current_query.current += 1
+        return card
 
     if TYPE_CHECKING:
         @overload
@@ -225,15 +228,10 @@ class BaiGePage(CardSource):
 
     async def async_search_gen(self, text: str | int, by_id=False, ids_only=False):
         text = str(text)
-        if by_id:
-            url = Site.card_page_url(text)  # text是卡号
-            params = None
-        else:
-            url = f"{self.link}"
-            params = Site.query_params(text)
+        url, params = self._request_url_params(text, by_id)
         html = await get_html(url, params=params, timeout=20)
         self.current_query = QueryInfo(text)   # 在这里初始化 QueryInfo，这样能覆盖所有 CardSource 要求的方法
-        gen = self.html2Card(html, card_page=by_id) if not ids_only else self.html2IDCard(html)
+        gen = self._html2Card(html, card_page=by_id) if not ids_only else self._html2IDCard(html)
         for card in gen:
             self.current_query.current += 1
             yield card
@@ -244,6 +242,16 @@ class BaiGePage(CardSource):
     asyncSearch = async_search
 
     # ↑ 之前的老代码 ↑
+
+    @staticmethod
+    def _request_url_params(text: str, by_id=False):
+        if by_id:
+            url = Site.card_page_url(text)  # text是卡号
+            params = None
+        else:
+            url = Site.base_url
+            params = Site.query_params(text)
+        return url, params
 
     @staticmethod
     def _html2divs(html: BeautifulSoup, card_page=False) -> ResultSet[Tag]:
@@ -289,7 +297,7 @@ class BaiGePage(CardSource):
         async for card in self.async_search_gen(query):
             yield card
 
-    def html2IDCard(self, html) -> Generator[CnJpEnIDCard, None, None]:
+    def _html2IDCard(self, html) -> Generator[CnJpEnIDCard, None, None]:
         html = BeautifulSoup(html, "lxml")
         divs = self._html2divs(html)
         if not divs:

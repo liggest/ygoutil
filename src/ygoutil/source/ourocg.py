@@ -51,26 +51,31 @@ class Translate(Enum):
 class OurOcg(CardSource):
     """ 查 OurOcg 网页 """
     def __init__(self):
-        self.edition = Translate.DEFAULT
+        self._edition = Translate.DEFAULT
         self.name_search_limit = 10
         """ 
-            from_name 中比对卡名时，最多比对卡片数量\n
+            from_name 中精确比对卡名时，最多比对卡片数量\n
             默认最多 10 张（即 1 页），为 0 时表示无限制
         """
 
-    def SetTranslateEdition(self, ed: str):
-        for trans in Translate:
-            if trans.name == ed.upper():
-                self.edition = trans
-                break
+    def set_translate_edition(self, ed: str):
+        """ 设置译文偏好为 'NW' 或 'CN' """
+        trans = Translate.DEFAULT
+        if any(trans := t for t in Translate if t.name == ed.upper()):
+            self._edition = trans
 
-    ourocgLink = Site.base_url
+    SetTranslateEdition = set_translate_edition  # 兼容
 
-    def GetHTML(self, url):
-        res = httpx.get(url)
+    @property
+    def link(self):
+        """ 网页链接 """
+        return Site.base_url
+
+    def _getHTML(self, url):
+        res = httpx.get(url, follow_redirects=True)
         return res.text
 
-    def GetCardHTMLWithJ(self, searchtext: str, url: str, searchHTML: str):
+    def _getCardHTMLWithJ(self, searchtext: str, url: str, searchHTML: str):
         targeturl: str = ""
         cardJson = None
         # Pmark=[None,None]
@@ -104,7 +109,7 @@ class OurOcg(CardSource):
             targeturl = url  # 直接是卡片详情页
         return targeturl, cardJson
 
-    def GetCardFromHTML(self, cardHTML, cardJson) -> Card:
+    def _getCardFromHTML(self, cardHTML, cardJson) -> Card:
         if cardJson is None:
             cardJson = {}
         # print(cardJson)
@@ -125,12 +130,12 @@ class OurOcg(CardSource):
                 temp = mark["class"][1].split("_")
                 if temp[2] == "on":
                     c.monster.link.marks |= LinkMark.from_number(int(temp[1]), with_mid=True)
-        c.names = CnJpEnNameUnit(c)
-        cn_name, nw_name, c.names.jp_name, c.names.en_name = self._names_from_div(divr)
-        c.names.name = cn_name if self.edition is Translate.CN else nw_name  # 默认是 nw
+        c._name_unit = CnJpEnNameUnit(c)
+        cn_name, nw_name, c._name_unit.jp_name, c._name_unit.en_name = self._names_from_div(divr)
+        c._name_unit.name = cn_name if self._edition is Translate.CN else nw_name  # 默认是 nw
         # c.isRD = isRD
         if is_RD:
-            c.ids = RushDuelIDUnit(c)
+            c._id_unit = RushDuelIDUnit(c)
         else:
             id = divr[4][0]
             id = int(id) if id and id != "-" else 0  # id 可能为 -
@@ -200,19 +205,21 @@ class OurOcg(CardSource):
                 effectlist.append(effectlist[1] + tempnum)
                 effectlist.append(effectlist[2] + tempnum)
         effects = divr[effectnum][
-            effectlist[self.edition.value] : effectlist[self.edition.value + 1]
+            effectlist[self._edition.value] : effectlist[self._edition.value + 1]
         ]
         effectText = "\n".join(effects)
-        c.text = OurOcg.beautifyText(effectText)
+        c.text = self._beautifyText(effectText)
         return c
 
-    def FindCardByName(self, searchtext):
+    def _findCardByName(self, searchtext):
         url = Site.search_url(searchtext)
-        searchHTML = self.GetHTML(url)
-        targeturl, cardJson = self.GetCardHTMLWithJ(searchtext, url, searchHTML)
+        searchHTML = self._getHTML(url)
+        targeturl, cardJson = self._getCardHTMLWithJ(searchtext, url, searchHTML)
         if targeturl:
-            cardHTML = self.GetHTML(targeturl)
-            return self.GetCardFromHTML(cardHTML, cardJson)
+            self.current_query = OurOcgQueryInfo(searchtext)
+            cardHTML = self._getHTML(targeturl)
+            self.current_query.current += 1
+            return self._getCardFromHTML(cardHTML, cardJson)
         return None
 
     # async def AsyncGetHTML(self, url):
@@ -229,23 +236,24 @@ class OurOcg(CardSource):
     #         return self.GetCardFromHTML(cardHTML, cardJson)
     #     return None
 
-    wikiLink = Site.wiki_url
+    _wiki_link = Site.wiki_url
 
-    def getWikiLink(self, card: Card):
+    def _get_wiki_link(self, card: Card):
+        """ 试着从 card 的卡名中得出 wiki 链接 """
         if TYPE_CHECKING:
             assert isinstance(card.names, CnJpEnNameUnit)
         if card.names.jp_name:
-            pageword = f"《{OurOcg.towikistr(card.names.jp_name)}》"
+            pageword = f"《{self._to_wiki_str(card.names.jp_name)}》"
         elif card.names.en_name:
             pageword = f"《{card.names.en_name}》"
         else:
             return None
         pageword = parse.quote(pageword, encoding="euc-jp")
-        return f"{self.wikiLink}index.php?cmd=read&page={pageword}"
+        return f"{self._wiki_link}index.php?cmd=read&page={pageword}"
 
     @staticmethod
-    def towikistr(text: str):
-        """半角转全角，以及一些特殊符号的转换"""
+    def _to_wiki_str(text: str):
+        """ 半角转全角，以及一些特殊符号的转换 """
         transDict = {
             #' ':chr(12288), #半角空格直接转化
             "·": "・",
@@ -276,9 +284,9 @@ class OurOcg(CardSource):
         return r
 
     @staticmethod
-    def beautifyText(text):
-        """试着给效果文本加换行，好看一点"""
-        nums = set(list("①②③④⑤⑥⑦⑧⑨⑩●"))
+    def _beautifyText(text: str):
+        """ 试着给效果文本加换行，好看一点 """
+        nums = set("①②③④⑤⑥⑦⑧⑨⑩●")
         transDict = {"・": "·"}
         r = ""
         length = len(text)
@@ -318,7 +326,7 @@ class OurOcg(CardSource):
         jp_name = jp_name.replace("・", "·")
         return cn_name, nw_name, jp_name, en_name
 
-    def card_url_json_gen(self, url: str, html: str):
+    def _card_url_json_gen(self, url: str, html: str):
         root = BeautifulSoup(html, "lxml")
         if TYPE_CHECKING:
             assert root.head
@@ -349,7 +357,7 @@ class OurOcg(CardSource):
             target_url = str(one["href"]).replace("\\", "")
             yield target_url, one
 
-    def ids_from_json(self, card_json: dict | None) -> OurOcgIDCard | None:
+    def _ids_from_json(self, card_json: dict | None) -> OurOcgIDCard | None:
         if card_json:
             id = int(card_json.get("password") or 0)
             cn_name = card_json.get("name") or ""
@@ -358,7 +366,7 @@ class OurOcg(CardSource):
             en_name = card_json.get("name_en") or ""  # 名称可能为 None
             return OurOcgIDCard(id, cn_name, jp_name, en_name, nw_name)
 
-    def ids_from_html(self, card_html) -> OurOcgIDCard:
+    def _ids_from_html(self, card_html) -> OurOcgIDCard:
         html = BeautifulSoup(card_html, "lxml")
         is_RD = self._is_RD(html)
         divr = self._div_data(html)
@@ -384,8 +392,8 @@ class OurOcg(CardSource):
         while query_info.current_page <= query_info.total_page:
             url = Site.search_url(query, query_info.current_page)  # 默认最初 current_page = 0
             html = await get_html(url, follow_redirects=True)      # OurOcg 有页面重定向
-            for card_url, card_json in self.card_url_json_gen(url, html):
-                if ids_only and (ids := self.ids_from_json(card_json)):
+            for card_url, card_json in self._card_url_json_gen(url, html):
+                if ids_only and (ids := self._ids_from_json(card_json)):
                     query_info.current += 1
                     yield ids
                     continue
@@ -393,9 +401,9 @@ class OurOcg(CardSource):
                     card_html = await get_html(card_url, follow_redirects=True)
                     query_info.current += 1
                     if ids_only:
-                        yield self.ids_from_html(card_html)
+                        yield self._ids_from_html(card_html)
                     else:
-                        yield self.GetCardFromHTML(card_html, card_json)
+                        yield self._getCardFromHTML(card_html, card_json)
             query_info.current_page += 1
 
     async def from_id(self, card_id: int) -> Card | None:

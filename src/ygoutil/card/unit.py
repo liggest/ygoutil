@@ -376,9 +376,9 @@ class PMarkUnit(CardUnit):
 
     def _init_p_text(self):
         if base_unit := check_cached_property(self._owner, "texts"):
-            self._owner.texts = PTextUnit.from_base(base_unit)
+            self._owner._text_unit = PTextUnit.from_base(base_unit)
         else:
-            self._owner.texts = PTextUnit(self._owner)
+            self._owner._text_unit = PTextUnit(self._owner)
 
     def info(self):
         return f"←{self.left} 【灵摆】 {self.right}→" if self.left and self.right else ""

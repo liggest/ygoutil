@@ -28,7 +28,7 @@ async def test_ourocg_rd(ourocg: OurOcg):
 @pytest.mark.asyncio
 async def test_ourocg_from_name(ourocg: OurOcg):
     ourocg.name_search_limit = 0
-    ourocg.edition = Translate.CN
+    ourocg.set_translate_edition(Translate.CN.name)
     card = await ourocg.from_name("元素英雄 新宇侠")
     assert card
     assert card.name == "E·HERO 新生人"

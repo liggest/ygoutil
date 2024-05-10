@@ -46,8 +46,8 @@ def card_from_cdb_data(card: Card, id: int, ot: int, alias: int, sets: int, type
                       set_map: dict[int, str] = None, lf_map: dict[int, int] = None) -> Card:
     if alias:
         id, alias = alias, id  # alias 里面才是真的卡号，id 里面是替身卡号
-        card.ids = AliasIDUnit(card)
-        card.ids.alias_id = alias
+        card._id_unit = AliasIDUnit(card)
+        card._id_unit.alias_id = alias
     card.id = id
     card._limit_unit = LimitUnit(card)  # 有 LimitUnit
     card.limits.ot = CardOT(ot)
@@ -69,7 +69,7 @@ def card_from_cdb_data(card: Card, id: int, ot: int, alias: int, sets: int, type
             monster.defence = deal_atk_def(defence)
         if monster._pmark_unit:
             monster._pmark_unit.mark = deal_p_mark(level)
-            card.texts = PTextUnit(card)  # 灵摆怪兽试用 PTextUnit
+            card._text_unit = PTextUnit(card)  # 灵摆怪兽试用 PTextUnit
         monster.race = CardRace(race)
         monster.attribute = CardAttribute(attribute)
     card._category_unit = CategoryUnit(card)  # 有 CategoryUnit

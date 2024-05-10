@@ -10,15 +10,15 @@ class Card:
     """ YGO 卡片 """
 
     @cached_property
-    def ids(self):
+    def _id_unit(self):
         return IDUnit(self)
 
     @cached_property
-    def names(self):
+    def _name_unit(self):
         return NameUnit(self)
 
     @cached_property
-    def texts(self):
+    def _text_unit(self):
         return TextUnit(self)
 
     @cached_property
@@ -48,30 +48,42 @@ class Card:
     @cached_property
     def _extra_unit(self) -> CardUnit | None:
         return None
-
+    
+    @property
+    def ids(self):
+        return self._id_unit
+    
     @property
     def id(self):
-        return self.ids.id
+        return self._id_unit.id
     
     @id.setter
     def id(self, value: int | str):
-        self.ids.id = value
+        self._id_unit.id = value
+
+    @property
+    def names(self):
+        return self._name_unit
 
     @property
     def name(self):
-        return self.names.name
+        return self._name_unit.name
     
     @name.setter
     def name(self, value: str):
-        self.names.name = value
+        self._name_unit.name = value
     
     @property
+    def texts(self):
+        return self._text_unit
+
+    @property
     def text(self):
-        return self.texts.text
+        return self._text_unit.text
     
     @text.setter
     def text(self, value: str):
-        self.texts.text = value
+        self._text_unit.text = value
 
     @property
     def limits(self):
@@ -174,9 +186,9 @@ class Card:
             self._monster_unit = MonsterUnit(self)
 
     def _info_gen(self):
-        yield line_or_not(self.names.info())             # 卡名
+        yield line_or_not(self._name_unit.info())        # 卡名
         yield line_or_not(self._type_unit.info())        # 类型
-        line = f"{self.ids.info()}"                      # 卡号、禁限、OT
+        line = f"{self._id_unit.info()}"                 # 卡号、禁限、OT
         if self._limit_unit:
             line = f"{line}  {self._limit_unit.info()}"
         yield line_or_not(line)
@@ -184,7 +196,7 @@ class Card:
             yield line_or_not(self._set_unit.info())     # 字段
         if self._monster_unit:
             yield line_or_not(self._monster_unit.info()) # 怪兽
-        yield self.texts.info()                          # 卡片文本，不用再换行
+        yield self._text_unit.info()                     # 卡片文本，不用再换行
         
     def info(self):
         """ 卡片信息 """
