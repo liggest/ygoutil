@@ -170,6 +170,8 @@ class YGORoom:
             host, port = self.servers.get("编年史", noserver)
         elif self.serverName == "2pick" or self.serverName == "轮抽":
             host, port = self.servers.get("2pick", noserver)
+        elif self.serverName.lower() == "mygo" or self.serverName == "888":
+            host, port = self.servers.get("超先行", noserver)
         elif self.serverName.startswith("复读") or self.serverName.lower() == "repiko":
             host, port = self.servers.get("repiko", noserver)
         else:
