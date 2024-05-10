@@ -1,7 +1,13 @@
 
 name: test_flow
 
-on: push
+on:
+  push:
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/**'
 
 jobs:
   ruff:
