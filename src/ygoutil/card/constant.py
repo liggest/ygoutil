@@ -225,9 +225,15 @@ class LinkMark(IntFlag):
     __repr__ = _repr
 
     @staticmethod
-    def from_number(num: int, with_mid=False):  # num: 1-9
-        if with_mid and num > 4:
-            num -= 1
+    def from_number(num: int, with_mid=False):
+        """ 
+            with_mid False:
+                num 1 2 3 4 5 6 7 8
+            with_mid True:
+                num 1 2 3 4 [5] 6 7 8 9
+        """
+        if not with_mid and num > 4:
+            num += 1
         # return number2linkMark[num-1]
         # return list(LinkMark)[num - 1]
         return LinkMark(1 << (num - 1))
