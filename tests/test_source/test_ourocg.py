@@ -32,6 +32,9 @@ async def test_ourocg_from_name(ourocg: OurOcg):
     card = await ourocg.from_name("元素英雄 新宇侠")
     assert card
     assert card.name == "E·HERO 新生人"
+    assert card._url_unit
+    assert card._url_unit.url
+    assert card._url_unit.pic
 
 @pytest.mark.asyncio
 async def test_ourocg_multiple(ourocg: OurOcg):

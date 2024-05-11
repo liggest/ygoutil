@@ -151,11 +151,20 @@ class OurOcg(CardSource):
                     assert isinstance(link_tag, Tag)
                 c._url_unit.url = str(link_tag.get("href", ""))
         if not c._url_unit.pic:
-            if img_parent := html.body.find("div", {"class": "img"}):
-                if TYPE_CHECKING:
-                    assert isinstance(img_parent, Tag)
-                if img_tag := img_parent.img:
-                    c._url_unit.url = str(img_tag.get("src", ""))
+            # if img_parent := html.body.find("div", {"class": "img"}):  # 这个值是动态填入的，读不到
+            #     if TYPE_CHECKING:
+            #         assert isinstance(img_parent, Tag)
+            #     if img_tag := img_parent.img:
+            #         c._url_unit.pic = str(img_tag.get("src", ""))
+            # 试着从 <script> 里读出图片链接
+            scripts: ResultSet[Tag] = html.body.find_all("script", {"src": None})  # 没有 src，有内容的脚本
+            import re
+            for s_tag in scripts:
+                script = s_tag.text
+                if script.strip().startswith("window.__MOUNTED__"):
+                    if match := re.search(r"img.src\s*=\s*\"(http[^\"]+.jpg)\";", script):
+                        # img.src = "https://ocg-p.yimieji.com/XXXX.jpg";
+                        c._url_unit.pic = match.group(1)
         limitnum = 5
         if is_RD:
             limitnum = 4
