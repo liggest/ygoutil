@@ -20,6 +20,9 @@ async def test_baige(baige: BaiGe):
     assert card
     assert isinstance(card.names, BaiGeNameUnit)
     assert card.name == "形态变化" and card.names.jp_name == "フォーム・チェンジ"
+    assert card._url_unit
+    assert card._url_unit.url
+    assert card._url_unit.pic
     assert isinstance(card.extras, BaiGeExtraUnit)
     assert card.extras.c_id == 9068
     assert card.extras.faqs
@@ -47,6 +50,7 @@ async def test_baige_page(baige_page: BaiGePage):
     assert card
     assert card.name == "解码语者"
     assert card.monster
+    assert card.monster.defence is None
     assert card.monster.link.link == 3
     assert card.monster.link.marks == LinkMark.BottomLeft | LinkMark.BottomRight | LinkMark.Top
     assert isinstance(card.urls, BaiGeURLUnit)

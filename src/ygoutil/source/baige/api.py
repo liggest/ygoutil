@@ -3,7 +3,7 @@ from typing import AsyncGenerator, TYPE_CHECKING, Literal, overload
 
 from ygoutil.card import Card
 from ygoutil.card.ids import CnJpEnIDCard
-from ygoutil.card.unit import PTextUnit
+from ygoutil.card.unit import PTextUnit, URLUnit
 from ygoutil.source.base import CardSource, QueryInfo
 from ygoutil.source.baige.misc import Site, BaiGeResult, BaiGeCard, BaiGeNameUnit, BaiGeExtraUnit
 from ygoutil.source.misc import get_json, USE_CLIENT_DEFAULT, deal_web_text
@@ -26,6 +26,10 @@ class BaiGe(CardSource):
         if isinstance(card._text_unit, PTextUnit):
             card._text_unit.p_text = deal_web_text(json["text"]["pdesc"])
         card._text_unit._text = deal_web_text(json["text"]["desc"])
+        card._url_unit = URLUnit(card)
+        card_id = card.id
+        card._url_unit.url = Site.card_page_url(card_id)
+        card._url_unit.pic = Site.card_pic_url(card_id)  # 卡图有极小概率不存在
         card._extra_unit = BaiGeExtraUnit(card).update_from(json)
         return card
 
