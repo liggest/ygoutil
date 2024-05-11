@@ -59,6 +59,9 @@ class NameUnit(CardUnit):
 class CnJpEnNameUnit(NameUnit):
     """ 中日英卡名 """
 
+    show_ruby = False
+    """ 是否在 info 中显示日文注音（默认不显示） """
+
     def __init__(self, owner: Card):
         super().__init__(owner)
         self.jp_name: str = ""
@@ -74,7 +77,7 @@ class CnJpEnNameUnit(NameUnit):
         self.name = value
 
     def _jp_info(self):
-        if self.jp_ruby and self.jp_ruby != self.jp_name:
+        if self.show_ruby and self.jp_ruby and self.jp_ruby != self.jp_name:
             return f"{self.jp_name}（{self.jp_ruby}）"
         return self.jp_name
 
