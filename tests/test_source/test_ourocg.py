@@ -37,6 +37,17 @@ async def test_ourocg_from_name(ourocg: OurOcg):
     assert card._url_unit.pic
 
 @pytest.mark.asyncio
+async def test_ourocg_link(ourocg: OurOcg):
+    from ygoutil.card import LinkMark
+    card = await ourocg.from_id(1861629)
+    assert card
+    assert card.name == "解码语者"
+    assert card.monster
+    assert card.monster.defence is None
+    assert card.monster.link.link == 3
+    assert card.monster.link.marks == LinkMark.BottomLeft | LinkMark.BottomRight | LinkMark.Top
+
+@pytest.mark.asyncio
 async def test_ourocg_multiple(ourocg: OurOcg):
     cards = await ourocg.list_from_query("宝札", limit=6)
     assert cards
