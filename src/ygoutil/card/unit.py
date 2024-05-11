@@ -262,9 +262,9 @@ class MonsterUnit(CardUnit):
         raise AttributeError("Not a link monster")
 
     def _atk_def_info(self):
-        attack = self.attack or "-"
-        defense = self.defence  or "-"
-        return f"{attack} / {defense}" if attack and defense else ""
+        attack = str(self.attack) if self.attack is not None else "-"
+        defence = str(self.defence) if self.defence is not None else "-"  # defence 不存在时为 None
+        return f"{attack} / {defence}" if attack and defence else ""
 
     def _info_gen(self):
         line = ""
