@@ -44,7 +44,7 @@ class BaiGePage(CardSource):
     @staticmethod
     def img_link(card_id: int | str):
         """ 卡图链接 """
-        return Site.card_page_url(card_id)
+        return Site.card_pic_url(card_id)
 
     def _get_html(self, url, params=None):
         res = httpx.get(url, params=params, timeout=20)
