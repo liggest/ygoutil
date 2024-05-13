@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 from ygoutil.card.constant import (CardType, CardCategory, CardRace, CardAttribute, LinkMark, LinkMarkStyle, 
                                    CardOT, CardLF)
-from ygoutil.card.misc import check_cached_property, line_or_not
+from ygoutil.card.misc import check_cached_property, line_or_not, join_values
 
 class CardUnit:
     """ 卡片组成部分 """
@@ -26,10 +26,10 @@ class IDUnit(CardUnit):
 
     def __init__(self, owner: Card):
         super().__init__(owner)
-        self.id: int | str = 0
+        self.id: int | str = 0  # id = 0 => 没有卡号
 
     def info(self):
-        return str(self.id)
+        return str(self.id) if self.id else ""
 
 class AliasIDUnit(IDUnit):
     """ 同名卡卡号 """
@@ -152,9 +152,7 @@ class LimitUnit(CardUnit):
         return str(self.limit)
 
     def info(self):
-        if self.ot:
-            return f"{self._limit_info()}  {self._ot_info()}"
-        return self._limit_info()
+        return join_values(self._limit_info(), self._ot_info(), sep="  ")
 
 class SetUnit(CardUnit):
     """ 卡片系列（字段） """
@@ -199,7 +197,7 @@ class TypeUnit(CardUnit):
         return CardType.Link in self.types
     
     def info(self):
-        return " ".join(str(ct) for ct in self.types)
+        return "  ".join(str(ct) for ct in self.types)
 
 class CategoryUnit(CardUnit):
     """ 效果分类 """

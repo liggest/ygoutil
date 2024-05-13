@@ -4,7 +4,7 @@ from functools import cached_property
 from ygoutil.card.constant import CardType, CardCategory
 from ygoutil.card.unit import (IDUnit, NameUnit, TextUnit, LimitUnit, 
                                SetUnit, TypeUnit, CategoryUnit, MonsterUnit, URLUnit, CardUnit)
-from ygoutil.card.misc import line_or_not
+from ygoutil.card.misc import line_or_not, join_values
 
 class Card:
     """ YGO 卡片 """
@@ -187,11 +187,11 @@ class Card:
 
     def _info_gen(self):
         yield line_or_not(self._name_unit.info())        # 卡名
-        yield line_or_not(self._type_unit.info())        # 类型
-        line = f"{self._id_unit.info()}"                 # 卡号、禁限、OT
+        id_line = self._id_unit.info()                   # 卡号、禁限、OT
         if self._limit_unit:
-            line = f"{line}  {self._limit_unit.info()}"
-        yield line_or_not(line)
+            id_line = join_values(id_line, self._limit_unit.info(), sep="  ")
+        yield line_or_not(id_line)
+        yield line_or_not(self._type_unit.info())        # 类型
         if self._set_unit:
             yield line_or_not(self._set_unit.info())     # 字段
         if self._monster_unit:
