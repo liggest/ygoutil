@@ -64,7 +64,8 @@ class BaiGeCard(TypedDict):
     html: CardHTML
 
     weight: int
-    faqs: list[str]
+    # faqs: list[str]
+    faqcount: int
     artid: int
 
 class BaiGeResult(TypedDict):
@@ -102,13 +103,15 @@ class BaiGeExtraUnit(CardUnit):
         self.art_id: int = 0
         self.refers: list[int] | None = None  # 效果中关联到的卡的卡号
         self.faqs: list[int] | None = None    # FAQ 号
+        self.faq_count: int = 0
 
     def update_from(self, card: BaiGeCard):
         self.c_id = card["cid"]
         self.weight = card["weight"]
         self.art_id = card["artid"]
         self.refers = [int(id) for id in card["html"]["refer"]]
-        self.faqs = [int(fid) for fid in card["faqs"]]
+        # self.faqs = [int(fid) for fid in card["faqs"]]
+        self.faq_count = card.get("faqcount", 0)
         return self
 
 class BaiGeURLUnit(URLUnit):
@@ -122,7 +125,8 @@ class BaiGeURLUnit(URLUnit):
         self.QA: str = ""
         self.wiki: str = ""
         self.yugipedia: str = ""
-        self.ourocg: str = ""
+        # self.ourocg: str = ""
+        self.md_meta: str = ""
         self.script: str = ""
         self.ocg_rule: str = ""
 

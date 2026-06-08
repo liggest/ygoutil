@@ -25,7 +25,8 @@ async def test_baige(baige: BaiGe):
     assert card._url_unit.pic
     assert isinstance(card.extras, BaiGeExtraUnit)
     assert card.extras.c_id == 9068
-    assert card.extras.faqs
+    # assert card.extras.faqs == []
+    assert card.extras.faq_count == 0
 
 @pytest.mark.asyncio
 async def test_baige_multiple(baige: BaiGe):
@@ -60,7 +61,8 @@ async def test_baige_page(baige_page: BaiGePage):
     assert card.urls.QA
     assert card.urls.wiki
     assert card.urls.yugipedia
-    assert card.urls.ourocg
+    # assert card.urls.ourocg
+    assert card.urls.md_meta
     assert card.urls.script
     assert card.urls.ocg_rule
 

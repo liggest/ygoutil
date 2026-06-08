@@ -39,7 +39,7 @@ class BaiGePage(CardSource):
 
     _link_name = {"数据库": "database", "db": "database", 
                 "日文": "database_jp", "英文": "database_en", "简中": "database_cn",
-                "q&a": "QA", "脚本": "script", "裁定": "ocg_rule"}
+                "q&a": "QA", "脚本": "script", "裁定": "ocg_rule", "mdm": "md_meta"}
 
     @staticmethod
     def img_link(card_id: int | str):
@@ -226,7 +226,7 @@ class BaiGePage(CardSource):
         async def async_search_gen(self, text: str | int, by_id=False, ids_only : Literal[True] = True) -> AsyncGenerator[CnJpEnIDCard, None]:
             ...
 
-    async def async_search_gen(self, text: str | int, by_id=False, ids_only=False):
+    async def async_search_gen(self, text: str | int, by_id = False, ids_only = False):
         text = str(text)
         url, params = self._request_url_params(text, by_id)
         html = await get_html(url, params=params, timeout=20)
