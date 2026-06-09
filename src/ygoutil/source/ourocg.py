@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from functools import cached_property
 
 import httpx
-from bs4 import BeautifulSoup, NavigableString, CData, Tag, ResultSet
+from bs4 import BeautifulSoup, NavigableString, CData, Tag
 # from bs4.element import NavigableString, CData, Tag
 
 try:
@@ -157,7 +157,7 @@ class OurOcg(CardSource):
             #     if img_tag := img_parent.img:
             #         c._url_unit.pic = str(img_tag.get("src", ""))
             # 试着从 <script> 里读出图片链接
-            scripts: ResultSet[Tag] = html.body.find_all("script", {"src": None})  # 没有 src，有内容的脚本
+            scripts: list[Tag] = html.body.find_all("script", {"src": None})  # 没有 src，有内容的脚本
             import re
             for s_tag in scripts:
                 script = s_tag.text
@@ -184,7 +184,7 @@ class OurOcg(CardSource):
             #     c.level = c.rank
             if monster._pmark_unit:
                 # c.Pmark=Pmark
-                monster._pmark_unit.mark = (cardJson.get("pend_l", None), cardJson.get("pend_r", None))
+                monster._pmark_unit.mark = (cardJson.get("pend_l", None), cardJson.get("pend_r", None)) # type: ignore
             if c.is_link:
                 link = deal_int(divr[otnum + 5][0])
                 attack = deal_int(divr[otnum + 4][0])
@@ -346,7 +346,7 @@ class OurOcg(CardSource):
         if not (title and title.string and title.string.startswith("搜索")):  # 不是搜索结果页，直接是卡片详情页
             yield url, None                                                   # 或者是卡名以“搜索”开头的卡（
             return
-        scripts: ResultSet[Tag] = root.body.find_all("script")
+        scripts: list[Tag] = root.body.find_all("script")
         script_text = ""
         # 试着拿到 json 所在的脚本
         if not any(script_text := s.string
@@ -390,11 +390,11 @@ class OurOcg(CardSource):
     if TYPE_CHECKING:
         @overload   # 用 overload 和字面量来区分返回值
         async def search_gen(self, query: str, ids_only: Literal[False] = False) -> AsyncGenerator[Card, None]:
-            ...
+            yield Card()
 
         @overload
         async def search_gen(self, query: str, ids_only: Literal[True] = True) -> AsyncGenerator[OurOcgIDCard, None]:
-            ...
+            yield OurOcgIDCard()
 
     async def search_gen(self, query: str, ids_only = False):
         self.current_query = query_info = OurOcgQueryInfo(query)

@@ -3,7 +3,7 @@
 from typing import TYPE_CHECKING, AsyncGenerator, Generator, Literal, overload
 # from urllib import parse
 import httpx
-from bs4 import BeautifulSoup, Tag, ResultSet
+from bs4 import BeautifulSoup, Tag
 # from bs4.element import PageElement, Tag
 # try:
 #     from bs4.element import TemplateString #新版bs4需要
@@ -220,11 +220,11 @@ class BaiGePage(CardSource):
     if TYPE_CHECKING:
         @overload
         async def async_search_gen(self, text: str | int, by_id=False, ids_only : Literal[False] = False) -> AsyncGenerator[Card, None]:
-            ...
+            yield Card()
 
         @overload
         async def async_search_gen(self, text: str | int, by_id=False, ids_only : Literal[True] = True) -> AsyncGenerator[CnJpEnIDCard, None]:
-            ...
+            yield CnJpEnIDCard()
 
     async def async_search_gen(self, text: str | int, by_id = False, ids_only = False):
         text = str(text)
@@ -254,24 +254,24 @@ class BaiGePage(CardSource):
         return url, params
 
     @staticmethod
-    def _html2divs(html: BeautifulSoup, card_page=False) -> ResultSet[Tag]:
+    def _html2divs(html: BeautifulSoup, card_page=False) -> list[Tag]:
         if card_page:
             return html.find_all("div", {"class": "row card detail"})
         else:
             return html.find_all("div", {"class": "row card result"})
 
     @staticmethod
-    def _div_card_info(div: Tag) -> ResultSet[Tag]:
+    def _div_card_info(div: Tag) -> list[Tag]:
         return div.find_all("div", limit=3, recursive=False)
 
     @staticmethod
-    def _div_id_names(info: ResultSet[Tag]):
+    def _div_id_names(info: list[Tag]):
         if TYPE_CHECKING:
             assert info[1].h2
         cn_name = info[1].h2.text  # 卡名
         jp_name = jp_ruby = en_name = ""
-        extras: ResultSet[Tag] = info[1].find_all("h3")
-        id_tags: ResultSet[Tag] = extras.pop().find_all("span")
+        extras: list[Tag] = info[1].find_all("h3")
+        id_tags: list[Tag] = extras.pop().find_all("span")
         id = int(id_tags[0].text)  # 卡号
         c_id = int(id_tags[-1].text)  # 数据库编号
         # en jp 卡名
