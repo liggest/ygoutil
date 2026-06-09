@@ -1,8 +1,18 @@
 from enum import Enum
-from typing import Iterable
+from typing import Iterable, TypeVar
 from functools import partialmethod
 
-from ygoutil.card.constant import CardType, CardRace, CardAttribute, LinkMark, LinkMarkStyle, CardCategory
+from ygoutil.card.constant import (
+    CardType,
+    CardRace,
+    CardAttribute,
+    LinkMark,
+    LinkMarkStyle,
+    CardCategory,
+)
+
+E = TypeVar("E", bound=Enum)
+
 
 class Card:
     """YGO 卡片"""
@@ -51,22 +61,22 @@ class Card:
 
     @property
     def isMonster(self):
-        """ 是怪兽卡 """
+        """是怪兽卡"""
         return CardType.Monster in self.cardType
 
     @property
     def isXyz(self):
-        """ 是超量 """ 
+        """是超量"""
         return CardType.Xyz in self.cardType
 
     @property
     def isP(self):
-        """ 是灵摆 """ 
+        """是灵摆"""
         return CardType.Pendulum in self.cardType
 
     @property
     def isLink(self):
-        """ 是连接 """
+        """是连接"""
         return CardType.Link in self.cardType
 
     def fillCardType(self, *types: CardType | str):
@@ -147,7 +157,7 @@ class Card:
         yield effecttext.replace("・", "·")
 
     def info(self):
-        """ 卡片信息 """
+        """卡片信息"""
         return "".join(self._infoGen())
 
     def fromCDBTuple(self, t, setdict: dict = None, lfdict: dict = None):
@@ -204,15 +214,15 @@ class Card:
         return [pl, pr]
 
     @staticmethod
-    def bit2Set(bit, enum: type[Enum]):
+    def bit2Set(bit, enum: type[E]) -> set[E]:
         return {x for x in enum if x.value & bit != 0}
 
     @staticmethod
-    def bit2Item(bit, enum: type[Enum]):
-        r = None
+    def bit2Item(bit, enum: type[E], default: E) -> E:
+        r = default
         if any((r := x) for x in enum if x.value & bit != 0):
             return r
-        return None
+        return default
 
     # @staticmethod
     # def funcWithEnum(func,enum):
@@ -220,11 +230,19 @@ class Card:
     #         return func(bit,enum)
     #     return wrapper
 
-    bit2CardTypes: partialmethod[set[CardType | str]] = partialmethod(bit2Set, enum=CardType)
-    bit2Race: partialmethod[CardRace] = partialmethod(bit2Item, enum=CardRace)
-    bit2Attribute: partialmethod[CardAttribute] = partialmethod(bit2Item, enum=CardAttribute)
+    bit2CardTypes: partialmethod[set[CardType | str]] = partialmethod(
+        bit2Set, enum=CardType
+    )
+    bit2Race: partialmethod[CardRace] = partialmethod(
+        bit2Item, enum=CardRace, default=CardRace.Unknown
+    )
+    bit2Attribute: partialmethod[CardAttribute] = partialmethod(
+        bit2Item, enum=CardAttribute, default=CardAttribute.Unknown
+    )
     bit2LinkMark: partialmethod[set[LinkMark]] = partialmethod(bit2Set, enum=LinkMark)
-    bit2Category: partialmethod[set[CardCategory]] = partialmethod(bit2Set, enum=CardCategory)
+    bit2Category: partialmethod[set[CardCategory]] = partialmethod(
+        bit2Set, enum=CardCategory
+    )
     # bit2CardTypes=funcWithEnum.__func__(bit2Set.__func__,CardType)
     # bit2Race=funcWithEnum.__func__(bit2Item.__func__,CardRace)
     # bit2Attribute=funcWithEnum.__func__(bit2Item.__func__,CardAttribute)

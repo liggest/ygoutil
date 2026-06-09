@@ -302,6 +302,7 @@ class CardCategory(IntFlag):
     效果无效 = 0x80000000
 
     def __str__(self):
+        assert self.name
         return self.name
 
     __repr__ = _repr

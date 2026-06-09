@@ -45,11 +45,11 @@ class BaiGe(CardSource):
     if TYPE_CHECKING:
         @overload   # 用 overload 和字面量来区分返回值
         async def _gen_from_query(self, query: str, ids_only: Literal[False] = False) -> AsyncGenerator[Card, None]:
-            ...
+            yield Card()
 
         @overload
         async def _gen_from_query(self, query: str, ids_only: Literal[True] = True) -> AsyncGenerator[CnJpEnIDCard, None]:
-            ...
+            yield CnJpEnIDCard()
 
     async def _gen_from_query(self, query: str, ids_only = False):
         result: BaiGeResult = await get_json(self._api_url, params=Site.query_params(query), timeout=self.timeout)
